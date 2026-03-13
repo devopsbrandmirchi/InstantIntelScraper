@@ -1,0 +1,3 @@
+- name: Run spider
+  run: |
+    scrapy crawl rohrmantoyota
