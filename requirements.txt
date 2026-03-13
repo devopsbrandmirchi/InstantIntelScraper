@@ -1,0 +1,4 @@
+scrapy
+requests
+psycopg2-binary
+supabase
