@@ -1,6 +1,7 @@
 import scrapy
 import hashlib
 import json
+from datetime import datetime, timezone
 from Rocmob.rocmob_cfg import supabase
 
 
@@ -14,6 +15,10 @@ class SkyriverrvSpider(scrapy.Spider):
     }
 
     start_urls = ['https://www.skyriverrv.com/api/feeds/vla']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.creation_date = datetime.now(timezone.utc).date().isoformat()
 
     def parse(self, response):
         self.logger.info(f"Connected to API: {response.url}")
@@ -161,11 +166,12 @@ class SkyriverrvSpider(scrapy.Spider):
                 "custom_label_0": custom_label_0,
                 "custom_label_1": custom_label_1,
                 "custom_label_2": custom_label_2,
+                "creation_date": self.creation_date,
             }
 
-            # 4. --- Upsert to Supabase (insert or update if sk already exists) ---
+            # One row per (sk, creation_date) per UTC day; same-day re-run updates
             try:
-                supabase.table("scrap_rawdata").upsert(row, on_conflict="sk").execute()
+                supabase.table("scrap_rawdata").upsert(row, on_conflict="sk,creation_date").execute()
                 self.logger.info(f"Upserted: {title}")
             except Exception as e:
                 self.logger.error(f"Supabase error for VIN {vin}: {e}")

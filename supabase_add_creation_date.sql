@@ -5,4 +5,6 @@
 ALTER TABLE public.scrap_rawdata
 ADD COLUMN IF NOT EXISTS creation_date date NULL DEFAULT (CURRENT_DATE);
 
-COMMENT ON COLUMN public.scrap_rawdata.creation_date IS 'Date the row was first inserted; used for data transfer.';
+COMMENT ON COLUMN public.scrap_rawdata.creation_date IS 'UTC scrape date; used for data transfer.';
+
+-- For daily new rows per vehicle, run also: supabase_scrap_rawdata_daily_pk.sql

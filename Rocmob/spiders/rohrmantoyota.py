@@ -2,6 +2,7 @@ import scrapy
 import re
 import hashlib
 import json
+from datetime import datetime, timezone
 from scrapy.http import Request
 from scrapy import Selector
 from Rocmob.rocmob_cfg import supabase
@@ -10,6 +11,11 @@ from Rocmob.rocmob_cfg import supabase
 class Rohrmantoyota(scrapy.Spider):
     name = "rohrmantoyota"
     start_urls = ['https://www.rohrmantoyota.com/searchall.aspx']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # UTC date for this crawl (matches cron / daily snapshot)
+        self.creation_date = datetime.now(timezone.utc).date().isoformat()
 
     def parse(self, response):
         sel = Selector(response)
@@ -137,7 +143,8 @@ class Rohrmantoyota(scrapy.Spider):
             "custom_label_0": custom_label_0,
             "custom_label_1": custom_label_1,
             "custom_label_2": custom_label_2,
+            "creation_date": self.creation_date,
         }
 
-        # Upsert: insert or update if sk already exists
-        supabase.table("scrap_rawdata").upsert(row, on_conflict="sk").execute()
+        # One row per (sk, creation_date): new snapshot each UTC day; same-day re-run updates
+        supabase.table("scrap_rawdata").upsert(row, on_conflict="sk,creation_date").execute()
