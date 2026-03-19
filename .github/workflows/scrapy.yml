@@ -14,6 +14,25 @@ jobs:
         spider:
           - rohrmantoyota
           - skyriverrv
+          - moixrvhs
+          - moixrvmo
+          - moixrvsc
+          - claycooleyford
+          - mcdavid
+          - trailerhitchrv
+          - campingworldareaFAR
+          - rvcountry
+          - funtownrvLR
+          - campingworldareaLIT
+          - campingworldareaSAR
+          - wheelsrv
+          - rockyridgerv
+          - crabtreerv
+          - WadesRvJO
+          - campingworldareaLOW
+          - RazorbackCampers
+          - Livingston
+          - rvcitybiz
 
     steps:
       - name: Checkout repository

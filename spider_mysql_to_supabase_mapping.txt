@@ -1,0 +1,23 @@
+MySQL version file name     Supabase version file name  Spider name            Dealership name
+-------------------------- -------------------------- -------------------- --------------------------------------------
+rohmantoyota.py             rohrmantoyota.py            rohrmantoyota         Rohrman Toyota
+skyriverrv.py               skyriverrv.py               skyriverrv            Sky River RV
+moixrvHS.py                 moixrvhs.py                 moixrvhs              Moix RV Hot Springs Landing
+moixrvMO.py                 moixrvmo.py                 moixrvmo              Moix RV Mcgaugh Outpost
+moixrvSC.py                 moixrvsc.py                 moixrvsc              Moix RV Supercenter
+claycooleyford.py           claycooleyford.py           claycooleyford        Clay Cooley Ford
+mcdavidford.py              mcdavidford.py              mcdavid               David McDavid Ford
+trailerhitchrv.py           trailerhitchrv.py           trailerhitchrv        Trailer Hitch RV
+campingworld_Fresno.py      campingworld_fresno.py      campingworldareaFAR   Camping World, Fresno
+rvcountry.py                rvcountry.py                rvcountry             RV Country Fresno
+funtownrv.py                funtownrv.py                funtownrvLR           Fun Town RV Little Rock
+campingworld_LIT.py         campingworld_lit.py         campingworldareaLIT   Camping World (North Little Rock, AR)
+campingworld_SAR.py         campingworld_sar.py         campingworldareaSAR   Camping World (Sherwood, AR)
+wheelsrv.py                 wheelsrv.py                 wheelsrv              Wheels RV
+rockyridge.py               rockyridge.py               rockyridgerv          Rocky Ridge RV
+crabtreerv.py               crabtreerv.py               crabtreerv            Crabtree RV
+wadesrv_jopin.py            wadesrv_joplin.py           WadesRvJO             Wades RV Joplin
+campingworld_LOW.py         campingworld_low.py         campingworldareaLOW   Camping World (Lowell, AR)
+razobackcampers.py          razorbackcampers.py         RazorbackCampers      Razorback Campers
+Livingstoncampers.py        livingstoncampers.py        Livingston            Livingston Campers
+rvcitybiz.py                rvcitybiz.py                rvcitybiz             RV City
