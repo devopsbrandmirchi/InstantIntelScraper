@@ -7,7 +7,7 @@ Scrapy-based web scrapers that collect dealership vehicle inventory and write ro
 - **Scrapy** spiders for multiple dealerships (RV, automotive, etc.)
 - **Supabase (PostgreSQL)** storage via `supabase-py` upserts
 - **Daily snapshots**: each vehicle can have one row per calendar day (UTC) using `creation_date` + composite primary key `(sk, creation_date)`
-- **GitHub Actions**: parallel matrix jobs, scheduled daily at **02:00 UTC** (manual `workflow_dispatch` also supported)
+- **GitHub Actions**: parallel matrix jobs, scheduled daily at **02:00** and **07:00 UTC** (manual `workflow_dispatch` also supported)
 
 ## Requirements
 
@@ -69,12 +69,13 @@ Spider names are the Scrapy `name` attribute (same strings as in the GitHub Acti
 
 ## GitHub Actions
 
-Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml).
+Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml) (shown in GitHub as **InstantIntel - Daily Scrapy to Supabase**).
 
-- **Schedule**: `cron: "0 2 * * *"` → daily at 02:00 UTC  
+- **Schedule**: `cron: "0 2 * * *"` and `cron: "0 7 * * *"` → daily at **02:00** and **07:00 UTC**  
 - **Triggers**: `schedule`, `workflow_dispatch`  
 - **Matrix**: one job per spider (parallel runs)  
-- Uses `actions/checkout@v4` and `actions/setup-python@v5`
+- Uses `actions/checkout@v6` and `actions/setup-python@v6`
+- Sets `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` so those actions run on **Node.js 24** (GitHub is deprecating Node 20 for Actions; Node 24 becomes the default around June 2026 — see [GitHub changelog](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)).
 
 If credentials are not injected via Secrets/env in CI, ensure your deployment approach matches how `rocmob_cfg.py` obtains the Supabase URL and key.
 

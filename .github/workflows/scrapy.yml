@@ -1,9 +1,16 @@
-name: Run Scrapy Spiders Parallel
+name: InstantIntel - Daily Scrapy to Supabase
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 2 * * *"   # Runs daily at 02:00 UTC
+    - cron: "0 2 * * *"   # Daily at 02:00 UTC
+    - cron: "0 7 * * *"   # Daily at 07:00 UTC
+
+# Use Node.js 24 for JS-based actions (checkout, setup-python) ahead of GitHub’s
+# June 2026 default; avoids Node 20 deprecation warnings.
+# See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   scrape:
@@ -36,10 +43,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.10"
 
