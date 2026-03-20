@@ -10,14 +10,69 @@ from Rocmob.rocmob_cfg import supabase
 class LivingstoncampersSpider(scrapy.Spider):
     name = "Livingston"
 
-    start_urls = ['https://www.livingstoncampersales.com/rebraco/unitlist/results?s=true&criteria=%7B%22HideLibrary%22%3Atrue%2C%22OnlyLibrary%22%3Afalse%2C%22UnitAgeFilter%22%3A0%2C%22InvertTagFilter%22%3Afalse%2C%22InvertTypeFilter%22%3Afalse%2C%22StatusId%22%3A%222%22%2C%22InvertManufacturerFilter%22%3Afalse%2C%22PriceFilters%22%3A%5B%5D%2C%22MonthlyPaymentsFilters%22%3A%5B%5D%2C%22PropVals%22%3A%7B%7D%2C%22ResultsSortString%22%3A%22condition-desc%2Cprice-asc%22%2C%22PageSize%22%3A24%2C%22PageNum%22%3A0%2C%22NoResultsPredetermined%22%3Afalse%2C%22IsCompact%22%3Afalse%7D&config=%7B%22PageId%22%3A440002%2C%22GlpForm%22%3A%221182%22%2C%22GlpForceForm%22%3A%221182%22%2C%22GlpNoPriceConfirm%22%3A1435%2C%22GlpPriceConfirm%22%3A1436%2C%22Slider%22%3Afalse%2C%22SliderPaused%22%3Afalse%2C%22VertSlider%22%3Afalse%2C%22VisibleSlides%22%3A3%2C%22IsCompact%22%3Afalse%2C%22Limit%22%3A0%2C%22SearchMode%22%3Afalse%2C%22DefaultSortMode%22%3A%22condition-desc%2Cprice-asc%22%2C%22UseFqdnUnitLinks%22%3Afalse%2C%22NumberOfSoldIfNoActive%22%3A0%2C%22NoResultsSnippetId%22%3A0%2C%22ShowSimilarUnitsIfNoResults%22%3Afalse%2C%22DefaultPageSize%22%3A24%2C%22ImageWidth%22%3A400%2C%22ImageHeight%22%3A0%2C%22NoPriceText%22%3A%22Call%20for%20price!%22%2C%22ShowPaymentsAround%22%3Atrue%2C%22ShowPaymentsAroundInCompactMode%22%3Afalse%2C%22DefaultToGridMode%22%3Afalse%2C%22DisableAjax%22%3Afalse%2C%22PriceTooltip%22%3A%22%22%2C%22FavoritesMode%22%3Afalse%2C%22ConsolidatedMode%22%3Afalse%7D']
+    # Interact RV JSON listing — often returns 403 without browser UA + referer (and blocks Scrapy default UA).
+    _SEARCH_PAGE = "https://www.livingstoncampersales.com/rv-search"
+    _LISTING_URL = (
+        "https://www.livingstoncampersales.com/rebraco/unitlist/results?s=true&criteria=%7B%22HideLibrary%22%3Atrue%2C%22OnlyLibrary%22%3Afalse%2C%22UnitAgeFilter%22%3A0%2C%22InvertTagFilter%22%3Afalse%2C%22InvertTypeFilter%22%3Afalse%2C%22StatusId%22%3A%222%22%2C%22InvertManufacturerFilter%22%3Afalse%2C%22PriceFilters%22%3A%5B%5D%2C%22MonthlyPaymentsFilters%22%3A%5B%5D%2C%22PropVals%22%3A%7B%7D%2C%22ResultsSortString%22%3A%22condition-desc%2Cprice-asc%22%2C%22PageSize%22%3A24%2C%22PageNum%22%3A0%2C%22NoResultsPredetermined%22%3Afalse%2C%22IsCompact%22%3Afalse%7D&config=%7B%22PageId%22%3A440002%2C%22GlpForm%22%3A%221182%22%2C%22GlpForceForm%22%3A%221182%22%2C%22GlpNoPriceConfirm%22%3A1435%2C%22GlpPriceConfirm%22%3A1436%2C%22Slider%22%3Afalse%2C%22SliderPaused%22%3Afalse%2C%22VertSlider%22%3Afalse%2C%22VisibleSlides%22%3A3%2C%22IsCompact%22%3Afalse%2C%22Limit%22%3A0%2C%22SearchMode%22%3Afalse%2C%22DefaultSortMode%22%3A%22condition-desc%2Cprice-asc%22%2C%22UseFqdnUnitLinks%22%3Afalse%2C%22NumberOfSoldIfNoActive%22%3A0%2C%22NoResultsSnippetId%22%3A0%2C%22ShowSimilarUnitsIfNoResults%22%3Afalse%2C%22DefaultPageSize%22%3A24%2C%22ImageWidth%22%3A400%2C%22ImageHeight%22%3A0%2C%22NoPriceText%22%3A%22Call%20for%20price!%22%2C%22ShowPaymentsAround%22%3Atrue%2C%22ShowPaymentsAroundInCompactMode%22%3Afalse%2C%22DefaultToGridMode%22%3Afalse%2C%22DisableAjax%22%3Afalse%2C%22PriceTooltip%22%3A%22%22%2C%22FavoritesMode%22%3Afalse%2C%22ConsolidatedMode%22%3Afalse%7D"
+    )
+
+    custom_settings = {
+        "USER_AGENT": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.creation_date = datetime.now(timezone.utc).date().isoformat()
 
+    def _listing_headers(self):
+        return {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": self._SEARCH_PAGE,
+            "X-Requested-With": "XMLHttpRequest",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+        }
+
+    def start_requests(self):
+        # Load search page first (cookies/session) then hit rebraco JSON like the site’s AJAX does.
+        yield scrapy.Request(
+            self._SEARCH_PAGE,
+            callback=self._after_search_page,
+            dont_filter=True,
+        )
+
+    def _after_search_page(self, response):
+        if response.status != 200:
+            self.logger.error(
+                "Livingston: search page HTTP %s — cannot load inventory API",
+                response.status,
+            )
+            return
+        yield scrapy.Request(
+            self._LISTING_URL,
+            callback=self.parse,
+            headers=self._listing_headers(),
+        )
+
     def parse(self, response):
-        json_data = json.loads(response.text)
+        if response.status != 200:
+            self.logger.error(
+                "Livingston listing API HTTP %s for %s — body preview: %s",
+                response.status,
+                response.url,
+                response.text[:500] if response.text else "",
+            )
+            return
+        try:
+            json_data = json.loads(response.text)
+        except json.JSONDecodeError as e:
+            self.logger.error("Livingston: invalid JSON from listing: %s", e)
+            return
         units = json_data.get('Units', [])
         for i in units:
             try:
@@ -36,7 +91,12 @@ class LivingstoncampersSpider(scrapy.Spider):
         if HasExactResults and total_units != 0:
             next_page += 1
             next_url = 'https://www.livingstoncampersales.com/rebraco/unitlist/results?s=true&criteria=%7B%22HideLibrary%22%3Atrue%2C%22OnlyLibrary%22%3Afalse%2C%22UnitAgeFilter%22%3A0%2C%22InvertTagFilter%22%3Afalse%2C%22InvertTypeFilter%22%3Afalse%2C%22StatusId%22%3A%222%22%2C%22InvertManufacturerFilter%22%3Afalse%2C%22PriceFilters%22%3A%5B%5D%2C%22MonthlyPaymentsFilters%22%3A%5B%5D%2C%22PropVals%22%3A%7B%7D%2C%22ResultsSortString%22%3A%22condition-desc%2Cprice-asc%22%2C%22PageSize%22%3A24%2C%22PageNum%22%3A0%2C%22NoResultsPredetermined%22%3Afalse%2C%22IsCompact%22%3Afalse%7D&config=%7B%22PageId%22%3A440002%2C%22GlpForm%22%3A%221182%22%2C%22GlpForceForm%22%3A%221182%22%2C%22GlpNoPriceConfirm%22%3A1435%2C%22GlpPriceConfirm%22%3A1436%2C%22Slider%22%3Afalse%2C%22SliderPaused%22%3Afalse%2C%22VertSlider%22%3Afalse%2C%22VisibleSlides%22%3A3%2C%22IsCompact%22%3Afalse%2C%22Limit%22%3A0%2C%22SearchMode%22%3Afalse%2C%22DefaultSortMode%22%3A%22condition-desc%2Cprice-asc%22%2C%22UseFqdnUnitLinks%22%3Afalse%2C%22NumberOfSoldIfNoActive%22%3A0%2C%22NoResultsSnippetId%22%3A0%2C%22ShowSimilarUnitsIfNoResults%22%3Afalse%2C%22DefaultPageSize%22%3A24%2C%22ImageWidth%22%3A400%2C%22ImageHeight%22%3A0%2C%22NoPriceText%22%3A%22Call%20for%20price!%22%2C%22ShowPaymentsAround%22%3Atrue%2C%22ShowPaymentsAroundInCompactMode%22%3Afalse%2C%22DefaultToGridMode%22%3Afalse%2C%22DisableAjax%22%3Afalse%2C%22PriceTooltip%22%3A%22%22%2C%22FavoritesMode%22%3Afalse%2C%22ConsolidatedMode%22%3Afalse%7D&page={}'.format(next_page)
-            yield Request(next_url, callback=self.parse, meta={'list_url': response.url})
+            yield Request(
+                next_url,
+                callback=self.parse,
+                headers=self._listing_headers(),
+                meta={"list_url": response.url},
+            )
 
     def parse_next(self, response):
         sel = Selector(response)
