@@ -3,8 +3,11 @@ name: InstantIntel - Daily Scrapy to Supabase
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 2 * * *"   # Daily at 02:00 UTC
-    - cron: "0 7 * * *"   # Daily at 07:00 UTC
+    # UTC only. IST ≈ UTC+5:30 → 02:25 UTC ≈ 07:55 IST; 07:35 UTC ≈ 13:05 IST.
+    # Avoid minute 0: GitHub queues many workflows on the hour, which often delays runs.
+    # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
+    - cron: "25 2 * * *"
+    - cron: "35 7 * * *"
 
 # Use Node.js 24 for JS-based actions (checkout, setup-python) ahead of GitHub’s
 # June 2026 default; avoids Node 20 deprecation warnings.

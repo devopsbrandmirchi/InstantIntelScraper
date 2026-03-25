@@ -7,7 +7,7 @@ Scrapy-based web scrapers that collect dealership vehicle inventory and write ro
 - **Scrapy** spiders for multiple dealerships (RV, automotive, etc.)
 - **Supabase (PostgreSQL)** storage via `supabase-py` upserts
 - **Daily snapshots**: each vehicle can have one row per calendar day (UTC) using `creation_date` + composite primary key `(sk, creation_date)`
-- **GitHub Actions**: parallel matrix jobs, scheduled daily at **02:00** and **07:00 UTC** (manual `workflow_dispatch` also supported)
+- **GitHub Actions**: parallel matrix jobs, scheduled twice daily in **UTC** (off the hour to reduce queue delays; manual `workflow_dispatch` also supported)
 
 ## Requirements
 
@@ -76,7 +76,7 @@ Spider names are the Scrapy `name` attribute (same strings as in the GitHub Acti
 
 Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml) (shown in GitHub as **InstantIntel - Daily Scrapy to Supabase**).
 
-- **Schedule**: `cron: "0 2 * * *"` and `cron: "0 7 * * *"` → daily at **02:00** and **07:00 UTC**  
+- **Schedule**: `cron: "25 2 * * *"` and `cron: "35 7 * * *"` (UTC). GitHub may still start jobs **late**; times are not guaranteed.  
 - **Triggers**: `schedule`, `workflow_dispatch`  
 - **Matrix**: one job per spider (parallel runs)  
 - Uses `actions/checkout@v6` and `actions/setup-python@v6`
