@@ -1,9 +1,10 @@
 # rocmob_cfg.py
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -31,7 +32,16 @@ def _supabase_key() -> str:
     )
 
 
-SUPABASE_URL = _require_env("SUPABASE_URL")
-SUPABASE_KEY = _supabase_key()
+@lru_cache(maxsize=1)
+def _client() -> Client:
+    return create_client(_require_env("SUPABASE_URL"), _supabase_key())
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+class _SupabaseLazy:
+    """Defer create_client until first use so `scrapy list` works without credentials."""
+
+    def __getattr__(self, name: str):
+        return getattr(_client(), name)
+
+
+supabase: Client = _SupabaseLazy()  # type: ignore[assignment]
