@@ -2,6 +2,16 @@ name: InstantIntel - Daily Scrapy to Supabase
 
 on:
   workflow_dispatch:
+    inputs:
+      spider_names:
+        description: "Comma-separated spider names (leave blank to run all). Example: skyriverrv,moixrvhs"
+        required: false
+        default: ""
+      fail_fast:
+        description: "If true, stop on the first failed spider"
+        required: false
+        default: false
+        type: boolean
   schedule:
     # UTC only. IST ≈ UTC+5:30 → 02:25 UTC ≈ 07:55 IST; 07:35 UTC ≈ 13:05 IST.
     # Avoid minute 0: GitHub queues many workflows on the hour, which often delays runs.
@@ -23,31 +33,6 @@ jobs:
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-    strategy:
-      matrix:
-        spider:
-          - rohrmantoyota
-          - skyriverrv
-          - moixrvhs
-          - moixrvmo
-          - moixrvsc
-          - claycooleyford
-          - mcdavid
-          - trailerhitchrv
-          - campingworldareaFAR
-          - rvcountry
-          - funtownrvLR
-          - campingworldareaLIT
-          - campingworldareaSAR
-          - wheelsrv
-          - rockyridgerv
-          - crabtreerv
-          - WadesRvJO
-          - campingworldareaLOW
-          - RazorbackCampers
-          - Livingston
-          - rvcitybiz
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -62,7 +47,69 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scrapy Spider
+      - name: Run all spiders (sequential)
         run: |
-          echo "Running spider: ${{ matrix.spider }}"
-          scrapy crawl ${{ matrix.spider }}
+          set -u
+          INPUT_SPIDERS="${{ github.event.inputs.spider_names || '' }}"
+          FAIL_FAST="${{ github.event.inputs.fail_fast || false }}"
+          export INPUT_SPIDERS
+          export FAIL_FAST
+
+          python - <<'PY' > /tmp/spider_list.txt
+          import os
+          import subprocess
+          import sys
+
+          selected_raw = (os.getenv("INPUT_SPIDERS") or "").strip()
+          selected = [x.strip() for x in selected_raw.split(",") if x.strip()]
+
+          proc = subprocess.run(
+              [sys.executable, "-m", "scrapy", "list"],
+              capture_output=True,
+              text=True,
+              check=False,
+          )
+          if proc.returncode != 0:
+              print(proc.stdout)
+              print(proc.stderr, file=sys.stderr)
+              raise SystemExit("Failed to list spiders.")
+
+          available = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+          spiders = selected if selected else available
+
+          if selected:
+              missing = [s for s in selected if s not in available]
+              if missing:
+                  raise SystemExit(f"Unknown spider(s): {', '.join(missing)}")
+
+          if not spiders:
+              raise SystemExit("No spiders found.")
+
+          for name in sorted(spiders, key=str.lower):
+              print(name)
+          PY
+
+          if [ "${FAIL_FAST}" = "true" ]; then
+            echo "Fail-fast enabled: stop on first error."
+            set -e
+          else
+            echo "Fail-fast disabled: continue after errors."
+            set +e
+          fi
+
+          failed=0
+          while IFS= read -r spider; do
+            [ -z "${spider}" ] && continue
+            echo "::group::scrapy crawl ${spider}"
+            scrapy crawl "${spider}"
+            code=$?
+            echo "::endgroup::"
+            if [ $code -ne 0 ]; then
+              failed=1
+              if [ "${FAIL_FAST}" = "true" ]; then
+                exit $code
+              fi
+            fi
+          done < /tmp/spider_list.txt
+
+          exit $failed

@@ -7,7 +7,7 @@ Scrapy-based web scrapers that collect dealership vehicle inventory and write ro
 - **Scrapy** spiders for multiple dealerships (RV, automotive, etc.)
 - **Supabase (PostgreSQL)** storage via `supabase-py` upserts
 - **Daily snapshots**: each vehicle can have one row per calendar day (UTC) using `creation_date` + composite primary key `(sk, creation_date)`
-- **GitHub Actions**: parallel matrix jobs, scheduled twice daily in **UTC** (off the hour to reduce queue delays; manual `workflow_dispatch` also supported)
+- **GitHub Actions**: spiders discovered at runtime and executed sequentially, scheduled twice daily in **UTC** (off the hour to reduce queue delays; manual `workflow_dispatch` also supported)
 
 ## Requirements
 
@@ -70,7 +70,7 @@ Example:
 scrapy crawl skyriverrv
 ```
 
-Spider names are the Scrapy `name` attribute (same strings as in the GitHub Actions matrix).
+Spider names are each spider’s Scrapy `name` attribute (`scrapy list` shows them).
 
 ## GitHub Actions
 
@@ -78,15 +78,15 @@ Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml) (shown 
 
 - **Schedule**: `cron: "25 2 * * *"` and `cron: "35 7 * * *"` (UTC). GitHub may still start jobs **late**; times are not guaranteed.  
 - **Triggers**: `schedule`, `workflow_dispatch`  
-- **Matrix**: one job per spider (parallel runs)  
+- **Spiders**: discovered at runtime with `scrapy list` (everything registered under `Rocmob/spiders/`), then **run one after another** in a single job (sorted by name for stable order).  
+- **Manual runs** (`workflow_dispatch`): you can optionally pass `spider_names` (comma-separated) to run only a subset, and `fail_fast` to stop on the first spider failure.
 - Uses `actions/checkout@v6` and `actions/setup-python@v6`
 - Sets `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` so those actions run on **Node.js 24** (GitHub is deprecating Node 20 for Actions; Node 24 becomes the default around June 2026 — see [GitHub changelog](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)).
 
 ## Adding a new spider
 
-1. Add a spider module under `Rocmob/spiders/` following existing patterns (`creation_date` in `__init__`, `row` dict aligned with `scrap_rawdata`, upsert `on_conflict="sk,creation_date"`).
-2. Append the spider `name` to the `matrix.spider` list in `.github/workflows/scrapy.yml`.
-3. Update `spider_mysql_to_supabase_mapping.csv` and `spider_mysql_to_supabase_mapping.txt` if it was migrated from a MySQL file.
+1. Add a spider module under `Rocmob/spiders/` following existing patterns (`creation_date` in `__init__`, `row` dict aligned with `scrap_rawdata`, upsert `on_conflict="sk,creation_date"`). It is picked up automatically on the next workflow run (`scrapy list`).
+2. Update `spider_mysql_to_supabase_mapping.csv` and `spider_mysql_to_supabase_mapping.txt` if it was migrated from a MySQL file.
 
 ## MySQL → Supabase reference
 
