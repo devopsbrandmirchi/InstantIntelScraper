@@ -7,7 +7,7 @@ Scrapy-based web scrapers that collect dealership vehicle inventory and write ro
 - **Scrapy** spiders for multiple dealerships (RV, automotive, etc.)
 - **Supabase (PostgreSQL)** storage via `supabase-py` upserts
 - **Daily snapshots**: each vehicle can have one row per calendar day (UTC) using `creation_date` + composite primary key `(sk, creation_date)`
-- **GitHub Actions**: spiders discovered at runtime and executed sequentially, scheduled twice daily in **UTC** (off the hour to reduce queue delays; manual `workflow_dispatch` also supported)
+- **GitHub Actions**: `discover-spiders` → dynamic **matrix** `run-spider` (one job per spider, like parallel pipelines in the UI), scheduled twice daily in **UTC** (off the hour to reduce queue delays; manual `workflow_dispatch` also supported)
 
 ## Requirements
 
@@ -78,8 +78,8 @@ Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml) (shown 
 
 - **Schedule**: `cron: "25 2 * * *"` and `cron: "35 7 * * *"` (UTC). GitHub may still start jobs **late**; times are not guaranteed.  
 - **Triggers**: `schedule`, `workflow_dispatch`  
-- **Spiders**: discovered at runtime with `scrapy list` (everything registered under `Rocmob/spiders/`), then **run one after another** in a single job (sorted by name for stable order).  
-- **Manual runs** (`workflow_dispatch`): you can optionally pass `spider_names` (comma-separated) to run only a subset, and `fail_fast` to stop on the first spider failure.
+- **Jobs**: `discover-spiders` runs `scrapy list`, writes a JSON matrix, then **`run-spider`** runs once per spider (parallel by default). Optional `fail_fast` cancels the rest after the first failure (manual runs only).  
+- **Manual runs** (`workflow_dispatch`): optional `spider_names` (comma-separated; blank = all), `fail_fast`, and `max_parallel` (e.g. `1` to run one spider at a time; blank = up to 256 concurrent jobs).
 - Uses `actions/checkout@v6` and `actions/setup-python@v6`
 - Sets `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` so those actions run on **Node.js 24** (GitHub is deprecating Node 20 for Actions; Node 24 becomes the default around June 2026 — see [GitHub changelog](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)).
 
