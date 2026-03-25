@@ -12,7 +12,7 @@ Scrapy-based web scrapers that collect dealership vehicle inventory and write ro
 ## Requirements
 
 - Python **3.10+** (matches CI)
-- Dependencies: see [`requirements.txt`](requirements.txt) (`scrapy`, `requests`, `supabase`, `psycopg2-binary`)
+- Dependencies: see [`requirements.txt`](requirements.txt) (`scrapy`, `requests`, `supabase`, `psycopg2-binary`, `python-dotenv`)
 
 ## Project layout
 
@@ -40,7 +40,12 @@ pip install -r requirements.txt
 
 ### Supabase configuration
 
-The client is created in [`Rocmob/rocmob_cfg.py`](Rocmob/rocmob_cfg.py). **Do not commit real API keys** to public repositories—prefer environment variables and local overrides (or GitHub **Secrets** for Actions).
+[`Rocmob/rocmob_cfg.py`](Rocmob/rocmob_cfg.py) builds the client from environment variables (and optionally a repo-root `.env` loaded via `python-dotenv`).
+
+- **Local:** copy [`.env.example`](.env.example) to `.env`, set `SUPABASE_URL` and `SUPABASE_KEY` (service role key, not anon). `.env` is gitignored.
+- **GitHub Actions:** add repository secret `SUPABASE_URL` and either `SUPABASE_KEY` or `SUPABASE_SERVICE_ROLE_KEY` for the service role key. The workflow injects these into each job.
+
+You may use `SUPABASE_SERVICE_ROLE_KEY` instead of `SUPABASE_KEY` anywhere (local `.env` or GitHub).
 
 Spiders upsert into `scrap_rawdata` with:
 
@@ -76,8 +81,6 @@ Workflow: [`.github/workflows/scrapy.yml`](.github/workflows/scrapy.yml) (shown 
 - **Matrix**: one job per spider (parallel runs)  
 - Uses `actions/checkout@v6` and `actions/setup-python@v6`
 - Sets `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` so those actions run on **Node.js 24** (GitHub is deprecating Node 20 for Actions; Node 24 becomes the default around June 2026 — see [GitHub changelog](https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/)).
-
-If credentials are not injected via Secrets/env in CI, ensure your deployment approach matches how `rocmob_cfg.py` obtains the Supabase URL and key.
 
 ## Adding a new spider
 
